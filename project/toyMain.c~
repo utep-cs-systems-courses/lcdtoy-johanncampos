@@ -1,0 +1,18 @@
+#include <msp430.h>
+#include <libTimer.h>
+#include "led.h"
+#include "switches.h"
+#include "buzzer.h"
+#include "lcddraw.h"
+
+int main(void) {
+  configureClocks();
+  lcd_init();
+  switch_init();
+  led_init();
+  buzzer_init();
+  clearScreen(COLOR_BLACK);
+  
+  enableWDTInterrupts();
+  or_sr(0x18);
+}
