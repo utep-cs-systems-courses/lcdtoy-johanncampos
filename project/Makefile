@@ -11,7 +11,7 @@ all: install toy.elf
 
 #additional rules for files
 toy.elf: ${COMMON_OBJECTS} toyMain.o led.o stateMachines.o switches.o buzzer.o wd_interrupt_handler.o p2_interrupt_handler.o ../lib/libLcd.a ../lib/libTimer.a
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ 
 
 install:
 	(cd ../timerLib; make install)

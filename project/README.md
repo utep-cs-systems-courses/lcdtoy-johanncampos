@@ -1,27 +1,54 @@
-# Regarding the Assembly
+# CURRENT ISSUES
 
-For the translation into assembly, I chose the first method I wrote since it
-would likely be the easiest to translate. When committing to GitHub, I only
-included the assembly file and its header so that it could be observed and
-graded independent of the actual project. This is in part because I believed
-that was the new instructions, contrary to the original project instructions,
-but also because I ran into a strange error with the assembly.
+I believe I have properly integrated the LCD library into this project, but I
+cannot currently edit the screen using the **clearScreen()** function.
 
-Specifically, rather than any sort of compilation error, it was the use of the
-green_on address. If one was to incorporate the assembly method into the
-project, as I had initially done, there would be no errors apart from the
-actual behavior of the state machine. Namely, every reference to "&green_on"
-is treated by the machine as a reference to "&red_on," thus making it that the
-green LED never turns on and the red LED fails to alternate on and off with
-each state advance. (To be clear, I do know that the states are advancing
-correctly because the C major scale is still coming out of the speaker from 0
-to 3; thus, it is simply the LED booleans -- specifically green_on -- that is
-the problem.)
+This rendition of the project is currently identitical to my second
+submission, save the following files:
 
-As of this submission, I do not know why this is so. Syntactically, the
-"count_to_three_assembly.s" file should be an accurate translation of the
-original method, switch statement and all. It is simply this oddity regarding
-the green_on boolean that is amiss.
-Thus, to reiterate, the assembly is complete and syntactically correct (I
-presume), but for the sake of demonstration, it is not actually incorporated
-into the project.
+- toyMain.c
+- stateMachines.c
+- Makefile
+
+In my **Makefile**, I incorporate the LCD library into my executable by adding
+`../lib/libLcd.a` into the **toy.elf** command as shown below:
+
+```
+toy.elf: ${COMMON_OBJECTS} toyMain.o led.o stateMachines.o switches.o buzzer.o wd_interrupt_handler.o p2_interrupt_handler.o ../lib/libLcd.a ../lib/libTimer.a
+```
+
+In the two classes, I have included the relevant header files from the LCD
+library as shown below:
+
+```
+#include <lcdutils.h>
+#include <lcddraw.h>
+```
+
+Then, in the **main()** method of **toyMain.c**, I have added the line
+
+```
+clearScreen(COLOR_YELLOW)
+```
+
+Similarly, in the **count_to_three()** method of **stateMachines.c**, I have added
+calls to the **clearScreen()** method in each of the cases.
+
+The issues from here are as follows:
+
+1. Everything compiles perfectly, suggesting that I have incorporated the LCD
+library and all of its header files and methods correctly.
+2. Despite this, when loading the program into my msp430, the screen is not
+initially made yellow. Instead, the screen is filled with a colorful static of pixels.
+3. I know that the calls to **clearScreen()** in my cases in the
+**count_to_three** method() are being implemented, because the program is
+slowing down with how much effort the system needs to spend running that
+method; however, the screen is not actually changing colors, instead
+maintaining the colorful static from before.
+
+I hope that these issues can be resolved swiftly, and that there is simply one
+big issue I am failing to notice. In the meantime, I can continue to program
+this project as if the screen were working.
+
+Thank you for your time,
+Johann Campos

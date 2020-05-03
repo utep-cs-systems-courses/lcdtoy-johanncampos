@@ -12,9 +12,9 @@ int main(void) {
   led_init();
   switch_init();
   buzzer_init();
-  u_char width = screenWidth, height = screenHeight;
+  
   clearScreen(COLOR_YELLOW);
-  drawString5x7(31, 50, "PLAYSTATION", COLOR_WHITE, COLOR_BLACK);
+  //drawString5x7(31, 50, "PLAYSTATION", COLOR_WHITE, COLOR_BLACK);
   enableWDTInterrupts();
   or_sr(0x18);
 }
