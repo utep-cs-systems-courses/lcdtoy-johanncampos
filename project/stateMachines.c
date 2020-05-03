@@ -46,16 +46,16 @@ void count_to_three() {
   switch (num++) {
   case 0: //Start on 0, play C4
     red_on = 0; green_on = 0; buzzer_set_period(7644);
-    clearScreen(COLOR_BLACK);
+    //clearScreen(COLOR_BLACK);
     break;
   case 1: //Go to 1, play E4
-    clearScreen(COLOR_RED);
+    //    clearScreen(COLOR_RED);
     red_on ^= 1; buzzer_set_period(6067); break;
   case 2: //Go to 2, play G4
-    clearScreen(COLOR_BLUE);
+    //clearScreen(COLOR_BLUE);
     red_on ^= 1; green_on ^= 1; buzzer_set_period(5102); break;
   case 3: //End on 3, play C5
-    clearScreen(COLOR_GREEN);
+    //clearScreen(COLOR_GREEN);
     red_on ^= 1; buzzer_set_period(3822); break;
   }
   
