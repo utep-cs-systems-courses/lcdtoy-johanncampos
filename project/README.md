@@ -1,3 +1,25 @@
+# UPDATE 5/3/20
+
+By experimenting with a test class within the lcdLib directory, I have
+determined that the issue in part revolves around the use of the
+**enableWDTInterrupts** command. It seems that for some reason (likely involving the
+timer), this command and **lcd_init()** cannot coexist. Similarly, as is
+demonstrated by this updated rendition of the toyMain class, **led_init()**
+and **buzzer_init()** also clash with the **lcd_init()** method.
+
+As of now, my project can act as either the state machine device from Project
+2 or as a screen display for this project, but not both at once. Currently, I
+have all the old initialization methods commented out, which prevents any of
+their features from being used, instead allowing for the screen to update with
+presses to each button.
+
+Additionally, in an effort to make a state machine without a WDT interrupt
+handler, I've placed the **state_advance()** call and **blink** incrementing
+variable within the for loop used for changing the screen. If one were to
+uncomment **led_init()** and **buzzer_init()** and comment out **lcd_init**,
+this would serve as an okay replacement for the handler, but this does not
+allow for the original timing of project 2 to be maintained.
+
 # CURRENT ISSUES
 
 I believe I have properly integrated the LCD library into this project, but I
