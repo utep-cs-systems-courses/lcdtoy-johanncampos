@@ -3,6 +3,8 @@
 
 extern char state;
 extern char charging;
+extern char prevState;
+extern char upper;
 extern char screenChanged;
 
 void state_advance();
