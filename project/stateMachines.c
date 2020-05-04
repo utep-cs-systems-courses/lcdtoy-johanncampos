@@ -4,36 +4,67 @@
 #include "stateMachines.h"
 #include "led.h"
 #include "buzzer.h"
+#include "lcdx.h"
 
 char state = 0;
 //Release boolean for jump()
 char charging = 0;
 
+//Booleans for LCD display
+char screenChanged = 0;
+
 void state_advance() {
   switch (state) {
   case 0: //State 0: Home Screen
+    /*
     red_on = 1;
     green_on ^= 1;
     green_on ? buzzer_set_period(758) : buzzer_set_period(803);
-    led_update();
+    led_update();*/
+    if (screenChanged) {
+      clearScreen(COLOR_BLACK);
+      drawString11x16(0, 30, "Home Menu", COLOR_WHITE, COLOR_BLACK);
+      drawString8x12(0, 50, "Select mode:", COLOR_WHITE, COLOR_BLACK);
+      drawString5x7(0, 70, "1. Count to Three", COLOR_WHITE, COLOR_BLACK);
+      drawString5x7(0, 80, "2. Jump", COLOR_WHITE, COLOR_BLACK);
+      drawString5x7(0, 90, "3. Inkantation", COLOR_WHITE, COLOR_BLACK);
+      drawString5x7(0, 100, "4. Loop de Loop", COLOR_WHITE, COLOR_BLACK);
+      screenChanged = 0;
+    }
     break;
   case 1: //State 1: Count to Three
+    if (screenChanged) {
+      clearScreen(COLOR_RED);
+      screenChanged = 0;
+    }
     count_to_three();
-    led_update();
+    //led_update();
     break;
   case 2: //State 2: Jump
-    red_on = 0;
-    green_on = 0;
+    //red_on = 0;
+    //green_on = 0;
+    if (screenChanged) {
+      clearScreen(COLOR_PURPLE);
+      drawString8x12(0, 20, "SQUID", COLOR_ORANGE, COLOR_PURPLE);
+      drawString8x12(5, 35, "JUMP", COLOR_ORANGE, COLOR_PURPLE);
+      drawString5x7(0, 50, "Score:", COLOR_ORANGE, COLOR_PURPLE);
+      screenChanged = 0;
+    }
     jump();
-    led_update();
+    //led_update();
     break;
   case 3: //State 3: Play Calamari Inkantation
+    if (screenChanged) {
+      fillRectangle(0, 0, screenWidth/2, screenHeight/2, COLOR_GREEN);
+      fillRectangle(screenWidth/2, screenHeight/2, screenWidth, screenHeight, COLOR_PINK);
+      screenChanged = 0;
+    }
     inkantate();
-    led_update();
+    //led_update();
     break;
   case 4: //State 4: Loop
     loop();
-    led_update();
+    //led_update();
     break;
   }
 }
@@ -42,85 +73,140 @@ void count_to_three() {
   //Counter
   static char num = 0;
 
+  //LCD Display Variables
+  static int y = 0;
+  static char *number = "0";
+  static int fgColor = 0x00;
+  static int bgColor = 0x00;
+  
   //Counting
   switch (num++) {
   case 0: //Start on 0, play C4
-    red_on = 0; green_on = 0; buzzer_set_period(7644);
-    //clearScreen(COLOR_BLACK);
+    //red_on = 0; green_on = 0; buzzer_set_period(7644);
+    y = 25; number = "0";
+    fgColor = COLOR_YELLOW; bgColor = COLOR_PURPLE;
     break;
   case 1: //Go to 1, play E4
-    //    clearScreen(COLOR_RED);
-    red_on ^= 1; buzzer_set_period(6067); break;
+    //red_on ^= 1; buzzer_set_period(6067);
+    y = 50; number = "1";
+    fgColor = COLOR_GREEN; bgColor = COLOR_YELLOW;
+    break;
   case 2: //Go to 2, play G4
-    //clearScreen(COLOR_BLUE);
-    red_on ^= 1; green_on ^= 1; buzzer_set_period(5102); break;
+    //red_on ^= 1; green_on ^= 1; buzzer_set_period(5102);
+    y = 75; number = "2";
+    fgColor = COLOR_BLUE; bgColor = COLOR_GREEN;
+    break;
   case 3: //End on 3, play C5
-    //clearScreen(COLOR_GREEN);
-    red_on ^= 1; buzzer_set_period(3822); break;
+    //red_on ^= 1; buzzer_set_period(3822);
+    y = 100; number = "3";
+    fgColor = COLOR_PURPLE; bgColor = COLOR_BLUE;
+    break;
   }
-  
+
+  //Draw Current Number
+  drawString11x16(100, y, number, fgColor, bgColor);
+
   //Reset after 3
   if (num == 4) {
     num = 0;
+    fillRectangle(100, 25, 120, 120, COLOR_RED);
   }
 }
 
-void jump() {
-  //Time Counter
-  static char sec_fraction = 0;
+void jump() {//New and improved, simpler to read
+  //Game Values
+  static int charge_level = 0;
+  static char action = 0;
+  //Charge Display
+  static char flashing = 0;
+  static char isRed = 0;
+  //Points
+  static int i = 0;
+  static int score = 0, high_score = 0;
+  static char scoreDisplay[3];
+  //Squid Measurements
+  static int posX = 80, posY = 125, size = 36;
 
-  //Charge Counter & Accompanying Sound
-  static char charge_level = 0; //Max 12
-  static int charge_noise[] = {B3, D4, E4, G4, A4, B4, D5}; //Borrowed notes from song to indicate rising charge level
-  static int note_index = 0;
-  static int charge_brightness = 32; //LED on every 32 250ths of a second
-
-  //Jump Noise
-  static int bounce[] = {D4, G4, 0};
-  static int bounce_index = 0;
-  
-  //Charging Mode
+  //Entryway
   if (charging) {
-    //Reset bounce noise
-    bounce_index = 0;
-    //Every half second, increase charge
-    if (sec_fraction % 125 == 0 && charge_level < 6) {
-      ++charge_level; //Increase charge level after half a second
-      ++note_index; //Go up a note
-      if (charge_brightness != 1) {
-	charge_brightness /= 2; //Exponentially increase LED_brightness
-      }
-      sec_fraction = 0; //Reset time counter
-    }
-    //Shine green LED fraction of the time
-    if (sec_fraction % charge_brightness == 0) {
-      green_on = 1;
-    } else {
-      green_on = 0;
-    }
-    //Blink red LED when at 2/3 charge level
-    if (charge_level > 3) {
-      if (sec_fraction < 62) {
-	red_on = 1;
-      } else {
-	red_on = 0;
-      }
-    }
-    //Update buzzer
-    buzzer_set_period(charge_noise[note_index]);
-  } else { //Reset charge attributes and time counter upon release
+    action = 1;
+  }
+  //Erase previous squid
+  if (action != 0) {
+    fillRectangle(posX-size/2, 0, posX+size/2, screenHeight, COLOR_PURPLE);
+  }
+
+  //Display Score
+  drawString5x7(36, 50, itoa(10*high_score, scoreDisplay, 10), COLOR_WHITE, COLOR_PURPLE);
+
+  //Victory
+  if (high_score == 20) {
+    drawString8x12(12, 80, "YOU", COLOR_ORANGE, COLOR_PURPLE);
+    drawString8x12(10, 95, "WIN!", COLOR_ORANGE, COLOR_PURPLE);
+    drawString5x7(0, 110, "Press", COLOR_WHITE, COLOR_PURPLE);
+    drawString5x7(0, 120, "Button 2", COLOR_WHITE, COLOR_PURPLE);
+    drawString5x7(0, 130, "to play", COLOR_WHITE, COLOR_PURPLE);
+    drawString5x7(0, 140, "again.", COLOR_WHITE, COLOR_PURPLE);
+    //Hard reset
     charge_level = 0;
-    note_index = 0;
-    charge_brightness = 32;
-    //Make bounce noise to indicate release
-    if (sec_fraction % 62 == 0 && bounce_index < 3) {
-      buzzer_set_period(bounce[bounce_index]);
-      ++bounce_index;
-      sec_fraction = 0;
-    }
+    flashing = 0;
+    isRed = 0;
+    score = 0;
+    high_score = 0;
+    action = 0;
+    state = 0;
   }
   
-  ++sec_fraction;//Keep track of time in place of wd_interrupt_handler
+  //State Machine
+  switch (action) {
+  case 0://Stationary Squid
+    drawTriangle(posX, posY, size, COLOR_WHITE);
+    break;
+  case 1://Charging Squid
+    //Increase charge
+    if(charge_level < 20) ++charge_level;
+    //Indicate level of charge
+    if (charge_level > 15) flashing = 1;
+    //Draw smaller squid
+    if (flashing && isRed) {
+      drawTriangle(posX, posY+charge_level/2, size-charge_level, COLOR_RED);
+	isRed = 0;
+    } else {
+      drawTriangle(posX, posY+charge_level/2, size-charge_level, COLOR_WHITE);
+	isRed = 1;
+    }
+    //Move to jump
+    if (!charging) {
+      i=charge_level;
+      action = 2;
+    }
+    break;
+  case 2://Jumping Squid
+    if(i > 0) {
+      //Draw higher squid
+      drawTriangle(posX, posY-5*(charge_level-i), size-charge_level, COLOR_WHITE);
+      --i;
+      ++score;
+      if (score > high_score){//Max 200 Points
+	high_score = score;
+      }
+    } else { //Move to fall
+      score = 0;
+      action = 3;
+    }
+    break;
+  case 3://Falling squid
+    if (charge_level > 0) {
+      //Draw lower squid
+      drawTriangle(posX, posY-5*charge_level, size-charge_level, COLOR_WHITE);
+      --charge_level;
+    } else {//Go to Stationary Squid
+      charge_level = 0;
+      action = 0;
+      flashing = 0;
+    }
+    break;
+  }
 }
 
 void inkantate() {
